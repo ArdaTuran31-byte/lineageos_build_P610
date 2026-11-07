@@ -10,16 +10,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Maximize Disk Space
-        uses: easimon/maximize-build-space@master
-        with:
-          root-swap-size-mb: 8192
-          temp-reserve-mb: 100
-          build-mount-path: '/build'
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          remove-code-spaces: 'true'
+      - name: Clean Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h
 
       - name: Install Dependencies
         run: |
@@ -33,21 +31,20 @@ jobs:
 
       - name: Initialize Repo and Sync
         run: |
-          sudo chown -R runner:runner /build
-          mkdir -p /build/lineage
-          cd /build/lineage
+          mkdir -p ~/lineage
+          cd ~/lineage
           repo init -u https://github.com/LineageOS/android.git -b lineage-24.0 --depth=1
 
           if [ -d "$GITHUB_WORKSPACE/.repo/local_manifests" ]; then
-            mkdir -p /build/lineage/.repo/local_manifests
-            cp -r $GITHUB_WORKSPACE/.repo/local_manifests/* /build/lineage/.repo/local_manifests/
+            mkdir -p ~/lineage/.repo/local_manifests
+            cp -r $GITHUB_WORKSPACE/.repo/local_manifests/* ~/lineage/.repo/local_manifests/
           fi
 
           repo sync -j16 --no-clone-bundle --no-tags
 
       - name: Start Building
         run: |
-          cd /build/lineage
+          cd ~/lineage
           source build/envsetup.sh
           lunch lineage_gta4xlwifi-userdebug
           mka bacon
