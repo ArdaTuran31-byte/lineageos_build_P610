@@ -1,23 +1,12 @@
-name: Build LineageOS for SM-P610
-
-on:
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Maximize Disk Space
+- name: Maximize Disk Space
         uses: easimon/maximize-build-space@master
         with:
-          root-swap-size-mb: 10240
-          build-mount-path: /
+          root-swap-size-mb: 8192
+          temp-reserve-mb: 100
+          build-mount-path: '/build' # Root yerine özel bir dizine bağlayın
           remove-dotnet: 'true'
           remove-android: 'true'
-          remove-postgresql: 'true'
+          remove-haskell: 'true'
           remove-code-spaces: 'true'
 
       - name: Install Dependencies
@@ -32,20 +21,22 @@ jobs:
 
       - name: Initialize Repo and Sync
         run: |
-          mkdir -p ~/lineage
-          cd ~/lineage
+          # Genişletilmiş yeni disk alanında (/build) klasör oluşturun
+          sudo chown -R runner:runner /build
+          mkdir -p /build/lineage
+          cd /build/lineage
           repo init -u https://github.com/LineageOS/android.git -b lineage-24.0 --depth=1
 
           if [ -d "$GITHUB_WORKSPACE/.repo/local_manifests" ]; then
-            mkdir -p ~/lineage/.repo/local_manifests
-            cp -r $GITHUB_WORKSPACE/.repo/local_manifests/* ~/lineage/.repo/local_manifests/
+            mkdir -p /build/lineage/.repo/local_manifests
+            cp -r $GITHUB_WORKSPACE/.repo/local_manifests/* /build/lineage/.repo/local_manifests/
           fi
 
           repo sync -j16 --no-clone-bundle --no-tags
 
       - name: Start Building
         run: |
-          cd ~/lineage
+          cd /build/lineage
           source build/envsetup.sh
           lunch lineage_gta4xlwifi-userdebug
           mka bacon
