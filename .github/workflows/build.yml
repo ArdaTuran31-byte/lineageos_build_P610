@@ -1,9 +1,21 @@
-- name: Maximize Disk Space
+name: Build LineageOS for SM-P610
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Maximize Disk Space
         uses: easimon/maximize-build-space@master
         with:
           root-swap-size-mb: 8192
           temp-reserve-mb: 100
-          build-mount-path: '/build' # Root yerine özel bir dizine bağlayın
+          build-mount-path: '/build'
           remove-dotnet: 'true'
           remove-android: 'true'
           remove-haskell: 'true'
@@ -21,7 +33,6 @@
 
       - name: Initialize Repo and Sync
         run: |
-          # Genişletilmiş yeni disk alanında (/build) klasör oluşturun
           sudo chown -R runner:runner /build
           mkdir -p /build/lineage
           cd /build/lineage
